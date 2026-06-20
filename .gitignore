@@ -1,0 +1,18 @@
+# Runtime state
+install_log.json
+installed_hashes.txt
+installed_pmp_hashes.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# .NET
+PenumbraHelper/bin/
+PenumbraHelper/obj/
+
+# Temp
+*.tmp
