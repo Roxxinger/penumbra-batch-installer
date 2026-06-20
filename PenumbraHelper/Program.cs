@@ -24,7 +24,7 @@ switch (action)
         SetDefaultImport(args.Length > 1 ? args[1] : "");
         break;
     case "delete-all":
-        DeleteAll();
+        DeleteAll(args.Length > 1 && args[1].ToLower() is "confirm" or "--yes" or "-y" or "yes");
         break;
     case "delete":
         if (args.Length < 2) { Console.Error.WriteLine("Usage: delete <mod-identifier>"); return; }
@@ -101,17 +101,48 @@ void SetFolder(string modId, string folderPath)
     }
 }
 
-void DeleteAll()
+void DeleteAll(bool confirmed)
 {
-    Console.Write($"This will DELETE ALL {dbPath} mods. ARE YOU SURE? (yes/no): ");
-    var confirm = Console.ReadLine();
-    if (confirm?.ToLower() != "yes") { Console.WriteLine("Cancelled."); return; }
-    
+    if (!confirmed)
+    {
+        Console.Error.WriteLine("❌ DESTRUCTIVE ACTION BLOCKED: 'delete-all' requires confirmation.");
+        Console.Error.WriteLine("   Usage: delete-all [confirm|--yes|-y]");
+        Console.Error.WriteLine("   This deletes ALL mod entries from the Penumbra database.");
+        Console.Error.WriteLine($"   Current DB: {dbPath}");
+        return;
+    }
+
+    // Zusätzliche Sicherheit: Prüfe ob ein Safelock-File existiert
+    string safelockPath = Path.Combine(
+        Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!,
+        "..", "..", "..", "..", "..", "SAFELOCK"
+    );
+    if (File.Exists(Path.GetFullPath(safelockPath)))
+    {
+        Console.WriteLine("🔒 SAFELOCK exists — delete-all blocked. Remove SAFELOCK file first.");
+        return;
+    }
+
     try
     {
         using var db = new LiteDatabase($"Filename={dbPath};Connection=Shared;Timeout=00:00:05");
         var collection = db.GetCollection("LocalModData");
         var count = collection.Count();
+        
+        if (count == 0)
+        {
+            Console.WriteLine("⚠️  No mods in database.");
+            return;
+        }
+
+        Console.Write($"🚨 This will DELETE ALL {count} mods from Penumbra! Type 'yes' to confirm: ");
+        var response = Console.ReadLine();
+        if (response?.ToLower() != "yes")
+        {
+            Console.WriteLine("Cancelled.");
+            return;
+        }
+
         collection.DeleteAll();
         Console.WriteLine($"✅ Deleted {count} mods from database.");
     }

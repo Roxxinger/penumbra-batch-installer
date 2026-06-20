@@ -2,6 +2,10 @@
 install_log.json
 installed_hashes.txt
 installed_pmp_hashes.txt
+.watcher.pid
+
+# Safety lock (created manually to block delete-all)
+SAFELOCK
 
 # Python
 __pycache__/

@@ -1171,6 +1171,8 @@ if __name__ == "__main__":
                         help="Bestehende Mods neu kategorisieren (nach Batch)")
     parser.add_argument("--fix-generals", action="store_true",
                         help="Nur Mods in 'general' oder leerem Ordner neu zuweisen")
+    parser.add_argument("--force", action="store_true",
+                        help="Destruktive Aktionen erlauben (z.B. Wiederholung nach clean wipe)")
     args = parser.parse_args()
 
     if args.list_only:
