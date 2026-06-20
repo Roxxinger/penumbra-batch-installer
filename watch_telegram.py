@@ -36,7 +36,7 @@ WATCH_DIR = r"D:\Telegram Desktop"
 INSTALLER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "install_pmp_mod.py")
 PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".watcher.pid")
 COOLDOWN = 60  # Sekunden nach letzter Änderung
-VALID_EXTENSIONS = (".7z", ".pmp", ".ttmp2")
+VALID_EXTENSIONS = (".7z", ".zip", ".rar", ".pmp", ".ttmp2")
 DEBOUNCE_CHECK_INTERVAL = 5  # Sekunden zwischen Cooldown-Checks
 
 # ─── Event Handler ───────────────────────────────────────────────────────────

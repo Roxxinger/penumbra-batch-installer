@@ -31,6 +31,9 @@ PENUMBRA_API = "http://localhost:42069/api"
 SEVEN_ZIP = r"C:\Program Files\7-Zip\7z.exe"
 HELPER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "PenumbraHelper")
 
+# Unterstützte Archiv-Formate
+ARCHIVE_EXTS = ('.7z', '.zip', '.rar')
+
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "install_log.json")
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "installed_hashes.txt")
 PMP_HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "installed_pmp_hashes.txt")
@@ -431,7 +434,7 @@ def save_install_log(data):
 
 
 def extract_7z(archive_path, dest_dir):
-    """Extrahiert 7z mit 7-Zip."""
+    """Extrahiert Archiv (7z/zip/rar) mit 7-Zip."""
     result = subprocess.run(
         [SEVEN_ZIP, "x", archive_path, f"-o{dest_dir}", "-y"],
         capture_output=True, text=True, timeout=600
@@ -1112,10 +1115,10 @@ def process_archives(source_dir, retry_failed=False):
     archives = sorted([
         os.path.join(root, f)
         for root, dirs, files in os.walk(source_dir)
-        for f in files if f.lower().endswith('.7z')
+        for f in files if f.lower().endswith(ARCHIVE_EXTS)
     ])
     if not archives:
-        log("❌ Keine .7z-Archive gefunden")
+        log("❌ Keine Archive (.7z/.zip/.rar) gefunden")
         return
     log(f"📦 {len(archives)} Archive gefunden")
 
@@ -1154,7 +1157,7 @@ def list_archives(source_dir):
     archives = sorted([
         os.path.join(root, f)
         for root, dirs, files in os.walk(source_dir)
-        for f in files if f.lower().endswith('.7z')
+        for f in files if f.lower().endswith(ARCHIVE_EXTS)
     ])
     log(f"📦 {len(archives)} Archive:")
     for a in archives:
