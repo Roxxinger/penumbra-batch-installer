@@ -1020,7 +1020,10 @@ def process_archive(archive, log_data, installed_hashes, retry_failed=False):
                 ver_str = info.get("version", "")
                 if ver_str:
                     parts = re.findall(r'\d+|[a-z]+', ver_str)
-                    nums = tuple(int(p) for p in parts if p.isdigit()) or (0, 0, 0)
+                    nums = [int(p) for p in parts if p.isdigit()]
+                    while len(nums) < 3:
+                        nums.append(0)
+                    nums = tuple(nums[:3])
                     suffix = ''.join(p for p in parts if not p.isdigit())
                 else:
                     nums, suffix, _ = parse_version_from_name(mf)
