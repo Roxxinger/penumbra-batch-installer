@@ -42,29 +42,59 @@ DEBOUNCE_CHECK_INTERVAL = 5  # Sekunden zwischen Cooldown-Checks
 # ─── Event Handler ───────────────────────────────────────────────────────────
 
 class ModFileHandler(FileSystemEventHandler):
-    """Überwacht Dateiänderungen und triggert den Installer mit Cooldown."""
+    """Überwacht Dateiänderungen und triggert den Installer mit Cooldown.
 
-    def __init__(self):
+    Triggert NUR bei neuen Dateien (on_created, on_moved) — nicht bei
+    on_modified, da Lesen/Listen bereits modified-Events auslöst.
+    """
+
+    def __init__(self, watch_dir):
+        self.watch_dir = os.path.abspath(watch_dir)
+        # Snapshot: welche Dateien existieren bereits beim Start?
+        self.known_files = set()
+        self._init_known_files()
         self.timer = None
         self.lock = threading.Lock()
         self.last_run = 0
-        self.running = threading.Event()
+
+    def _init_known_files(self):
+        """Erfasst alle existierenden Dateien beim Watcher-Start,
+        damit sie nicht fälschlich als 'neu' erkannt werden."""
+        if not os.path.isdir(self.watch_dir):
+            return
+        try:
+            for f in os.listdir(self.watch_dir):
+                fpath = os.path.join(self.watch_dir, f)
+                if os.path.isfile(fpath):
+                    self.known_files.add(os.path.normcase(fpath))
+        except PermissionError:
+            pass
+        print(f"   📋 Bestehende Dateien gesnapshotet: {len(self.known_files)}")
+
+    def _is_new_file(self, filepath):
+        """Prüft ob eine Datei wirklich neu ist (nicht vorher bekannt)."""
+        norm = os.path.normcase(filepath)
+        if norm in self.known_files:
+            return False
+        self.known_files.add(norm)
+        return True
 
     def _is_mod_file(self, path):
         """Prüft ob die Datei eine Mod-Datei ist."""
-        return any(path.lower().endswith(ext) for ext in VALID_EXTENSIONS)
+        return any(path.lower().endswith(ext) for ext in VALID_EXTENSIONS) and \
+               os.path.isfile(path)
 
     def on_created(self, event):
-        if not event.is_directory and self._is_mod_file(event.src_path):
-            self._schedule(f"📥 Neue Datei: {os.path.basename(event.src_path)}")
+        if event.is_directory:
+            return
+        if self._is_mod_file(event.src_path) and self._is_new_file(event.src_path):
+            self._schedule(f"📥 Neu: {os.path.basename(event.src_path)}")
 
     def on_moved(self, event):
-        if not event.is_directory and self._is_mod_file(event.dest_path):
-            self._schedule(f"📥 Datei verschoben: {os.path.basename(event.dest_path)}")
-
-    def on_modified(self, event):
-        if not event.is_directory and self._is_mod_file(event.src_path):
-            self._schedule(f"✏️  Datei geändert: {os.path.basename(event.src_path)}")
+        if event.is_directory:
+            return
+        if self._is_mod_file(event.dest_path) and self._is_new_file(event.dest_path):
+            self._schedule(f"📥 Verschoben: {os.path.basename(event.dest_path)}")
 
     def _schedule(self, reason=""):
         with self.lock:
@@ -206,7 +236,7 @@ def main():
     write_pid()
 
     # Watcher starten
-    event_handler = ModFileHandler()
+    event_handler = ModFileHandler(WATCH_DIR)
     observer = Observer()
     observer.schedule(event_handler, WATCH_DIR, recursive=False)
 
