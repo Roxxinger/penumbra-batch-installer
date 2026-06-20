@@ -129,16 +129,19 @@ def remove_pid():
         os.remove(PID_FILE)
 
 def is_running():
-    """Prüft ob Watcher bereits läuft."""
+    """Prüft ob Watcher bereits läuft (Windows-kompatibel)."""
     if not os.path.exists(PID_FILE):
         return False
     try:
         with open(PID_FILE) as f:
             pid = int(f.read().strip())
-        # Prüfen ob Prozess existiert (Unix-Style, funktioniert auch auf Windows)
-        os.kill(pid, 0)
-        return True
-    except (OSError, ValueError, ProcessLookupError):
+        # Windows: tasklist /FI "PID eq <pid>" prüfen
+        result = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            capture_output=True, text=True, timeout=5
+        )
+        return str(pid) in result.stdout
+    except (OSError, ValueError, subprocess.TimeoutExpired):
         remove_pid()
         return False
 
