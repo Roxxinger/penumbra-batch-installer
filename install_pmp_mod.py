@@ -1108,6 +1108,13 @@ def process_archive(archive, log_data, installed_hashes, retry_failed=False):
 
 def process_archives(source_dir, retry_failed=False):
     """Hauptschleife."""
+    # ── API-Health-Check ──
+    from penumbra_api import api_health
+    if not api_health():
+        log("❌ Penumbra-API nicht erreichbar (localhost:42069)")
+        log("   Starte FFXIV mit aktiviertem Penumbra und versuche es erneut.")
+        return
+
     os.makedirs(TEMP_DIR_PARENT, exist_ok=True)
     log_data = load_install_log()
     installed_hashes = load_hash_log()

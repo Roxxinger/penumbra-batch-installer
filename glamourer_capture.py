@@ -136,7 +136,9 @@ if __name__ == "__main__":
             for m in mods:
                 print(f"  • {m['Name'][:50]:50s} [{m['Directory'][:30]}]")
 
-    elif args.action == "capture":
+    if args.action == "capture":
+        from penumbra_api import require_api
+        require_api()
         if not args.name:
             print("❌ --name ist erforderlich")
             exit(1)

@@ -87,6 +87,8 @@ def cmd_create(args):
 
 def cmd_capture(args):
     """Aktuellen Mod-Zustand als Design speichern + optional verlinken."""
+    from penumbra_api import require_api
+    require_api()
     from glamourer_capture import capture_current_as_design
     design = capture_current_as_design(args.name, dry_run=args.dry_run)
     if design and not args.dry_run and args.job:
